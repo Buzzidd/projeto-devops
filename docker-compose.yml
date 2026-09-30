@@ -1,4 +1,5 @@
 version: "3.8"
+
 services:
   web:
     build: .
@@ -6,3 +7,15 @@ services:
     ports:
       - "80:80"
     restart: always
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    ports:
+      - "3001:3001"
+    volumes:
+      - uptime-kuma-data:/app/data
+    restart: always
+
+volumes:
+  uptime-kuma-data:
