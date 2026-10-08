@@ -69,6 +69,13 @@ services:
       - obs
     restart: always
 
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    networks:
+      - obs
+
 volumes:
   uptime-kuma-data:
   caddy_data:
