@@ -1,21 +1,53 @@
 version: "3.8"
 
 services:
+  # O nosso proxy reverso 
+  caddy:
+    image: caddy:alpine
+    container_name: caddy_borda
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - castelo_edge
+      - castelo_web
+      - obs
+    restart: always
+
+  #aplicação web
   web:
     build: .
     container_name: site_devops
-    ports:
-      - "80:80"
+    #Agora está protegido e sem acesso direto da internet.
+    networks:
+      - castelo_web
     restart: always
 
+  # O monitoramento
   uptime-kuma:
     image: louislam/uptime-kuma:1
     container_name: uptime-kuma
-    ports:
-      - "3001:3001"
+    # As portas foram removidas!
     volumes:
       - uptime-kuma-data:/app/data
+    networks:
+      - castelo_web
+      - castelo_edge
     restart: always
 
 volumes:
   uptime-kuma-data:
+  caddy_data:     # Guarda os certificados SSL do HTTPS
+  caddy_config:
+
+networks:
+  castelo_web:
+    internal: true   # Rede fechada, sem internet
+  castelo_edge:
+    driver: bridge   # Rede para a borda do Caddy[cite: 1]
+  obs:
+    external: true   # A rede que acabaste de criar na AWS[cite: 1]

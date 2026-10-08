@@ -1,0 +1,3 @@
+http://18.191.162.150 {
+    reverse_proxy site_devops:80
+}
