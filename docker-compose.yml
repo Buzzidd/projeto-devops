@@ -1,7 +1,6 @@
 version: "3.8"
 
 services:
-  # O nosso proxy reverso 
   caddy:
     image: caddy:alpine
     container_name: caddy_borda
@@ -10,6 +9,7 @@ services:
       - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_logs:/var/log/caddy       # NOVO: Partilha os logs
       - caddy_data:/data
       - caddy_config:/config
     networks:
@@ -18,20 +18,30 @@ services:
       - obs
     restart: always
 
-  #aplicação web
+  crowdsec:
+    image: crowdsecurity/crowdsec:latest
+    container_name: crowdsec
+    environment:
+      # Instala as regras de segurança base e do Caddy
+      - COLLECTIONS=crowdsecurity/caddy crowdsecurity/base-http-scenarios crowdsecurity/linux
+    volumes:
+      - ./acquis.yaml:/etc/crowdsec/acquis.yaml
+      - caddy_logs:/var/log/caddy:ro    # NOVO: Lê os logs partilhados
+      - crowdsec_data:/var/lib/crowdsec/data
+    networks:
+      - obs
+    restart: always
+
   web:
     build: .
     container_name: site_devops
-    #Agora está protegido e sem acesso direto da internet.
     networks:
       - castelo_web
     restart: always
 
-  # O monitoramento
   uptime-kuma:
     image: louislam/uptime-kuma:1
     container_name: uptime-kuma
-    # As portas foram removidas!
     volumes:
       - uptime-kuma-data:/app/data
     networks:
@@ -41,13 +51,15 @@ services:
 
 volumes:
   uptime-kuma-data:
-  caddy_data:     # Guarda os certificados SSL do HTTPS
+  caddy_data:
   caddy_config:
+  caddy_logs:         # NOVO
+  crowdsec_data:      # NOVO
 
 networks:
   castelo_web:
-    internal: true   # Rede fechada, sem internet
+    internal: true
   castelo_edge:
-    driver: bridge   # Rede para a borda do Caddy[cite: 1]
+    driver: bridge
   obs:
-    external: true   # A rede que acabaste de criar na AWS[cite: 1]
+    external: true
