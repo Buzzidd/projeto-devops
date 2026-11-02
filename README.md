@@ -27,8 +27,8 @@
 | Recursos da instância | 1 vCPU · **1 GB de RAM**                                     |
 | Orquestração          | Docker + Docker Compose (arquivo `docker-compose.yml` único) |
 | Repositório           | https://github.com/Buzzidd/projeto-devops                    |
-| Site público          | 18.191.162.150                                               |
-| Grafana               | 18.191.162.150:3000                                          |
+| Site público          | 18.217.7.251                                                 |
+| Grafana               | 18.217.7.251:3000                                            |
 
 ### 👥 Integrantes
 
