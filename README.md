@@ -1,4 +1,4 @@
-# 🏰 Projeto Castelo — Infraestrutura DevOps na AWS
+# 🏰 Projeto Devops — Infraestrutura DevOps na AWS
 
 > Infraestrutura self-hosted em uma única instância **AWS EC2 (`t2.micro`)** que entrega um site DevOps com borda protegida (TLS + WAF), observabilidade completa de métricas, monitoramento de disponibilidade e **deploy automatizado via GitHub Actions**. Tudo orquestrado com Docker Compose, rodando dentro do limite de **1 GB de RAM** do Free Tier.
 
@@ -361,7 +361,7 @@ free -h
 
 <div align="center">
 
-🏰 **Projeto Castelo** · Cloud Computing · Centro Universitário Faculdade São Lucas
+🏰 **Projeto Devops** · Cloud Computing · Centro Universitário Faculdade São Lucas
 
 Desenvolvido por **Carlos Vitor Camara Gomes** & **Giovanna Secundo Penso** e equipe.
 
