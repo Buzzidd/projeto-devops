@@ -13,8 +13,8 @@ jobs:
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_KEY }}
+          username: ubuntu
+          key: ${{ secrets.KEY }}
           script: |
             cd ~/projeto-devops
             git pull origin main
