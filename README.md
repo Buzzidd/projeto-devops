@@ -22,7 +22,7 @@
 | **Instituição**           | Centro Universitário Faculdade São Lucas             |
 | **Disciplina**            | Cloud Computing                                      |
 | **Avaliação**             | N1                                                   |
-| **Provedor Cloud**        | AWS EC2 — instância `t2.micro` (Free Tier)           |
+| **Provedor Cloud**        | AWS EC2 — instância `t3.micro` (Free Tier)           |
 | **Sistema Operacional**   | Ubuntu 26.04 LTS                                     |
 | **Recursos da Instância** | 1 vCPU · **1 GB de RAM**                             |
 | **Orquestração**          | Docker + Docker Compose (`docker-compose.yml` único) |
