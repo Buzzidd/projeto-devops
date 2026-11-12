@@ -1,6 +1,6 @@
-# 🏰 Projeto Devops — Infraestrutura DevOps na AWS
+# 🏰 Projeto DevOps — Infraestrutura Cloud & Observabilidade na AWS
 
-> Infraestrutura self-hosted em uma única instância **AWS EC2 (`t2.micro`)** que entrega um site DevOps com borda protegida (TLS + WAF), observabilidade completa de métricas, monitoramento de disponibilidade e **deploy automatizado via GitHub Actions**. Tudo orquestrado com Docker Compose, rodando dentro do limite de **1 GB de RAM** do Free Tier.
+> Infraestrutura self-hosted em uma única instância **AWS EC2 (`t2.micro`)** que entrega uma aplicação web com borda protegida (Proxy Reverso + WAF), observabilidade completa de métricas, monitoramento de disponibilidade e **deploy automatizado via GitHub Actions**. Tudo orquestrado com Docker Compose, rodando dentro do limite de **1 GB de RAM** do Free Tier.
 
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS%20EC2-FF9900?logo=amazonaws&logoColor=white)
@@ -14,23 +14,21 @@
 
 ---
 
-## 📋 Informações
+## 📋 Informações Acadêmicas e Técnicas
 
-| Item                  | Valor                                                        |
-| --------------------- | ------------------------------------------------------------ |
-| Alunos responsáveis   | Carlos Vitor Camara Gomes e Giovanna Secundo Penso           |
-| Instituição           | Centro Universitário Faculdade São Lucas                     |
-| Disciplina            | Cloud Computing                                              |
-| Avaliação             | N1                                                           |
-| Nuvem                 | AWS EC2 — instância `t2.micro` (Free Tier)                   |
-| Sistema operacional   | Ubuntu 26.04 LTS                                             |
-| Recursos da instância | 1 vCPU · **1 GB de RAM**                                     |
-| Orquestração          | Docker + Docker Compose (arquivo `docker-compose.yml` único) |
-| Repositório           | https://github.com/Buzzidd/projeto-devops                    |
-| Site público          | 18.217.7.251                                                 |
-| Grafana               | 18.217.7.251:3000                                            |
+| Item                      | Valor                                                |
+| :------------------------ | :--------------------------------------------------- |
+| **Alunos responsáveis**   | Carlos Vitor Camara Gomes e Giovanna Secundo Penso   |
+| **Instituição**           | Centro Universitário Faculdade São Lucas             |
+| **Disciplina**            | Cloud Computing                                      |
+| **Avaliação**             | N1                                                   |
+| **Provedor Cloud**        | AWS EC2 — instância `t2.micro` (Free Tier)           |
+| **Sistema Operacional**   | Ubuntu 26.04 LTS                                     |
+| **Recursos da Instância** | 1 vCPU · **1 GB de RAM**                             |
+| **Orquestração**          | Docker + Docker Compose (`docker-compose.yml` único) |
+| **Repositório**           | `https://github.com/Buzzidd/projeto-devops`          |
 
-### 👥 Integrantes
+### 👥 Equipe Completa
 
 - Carlos Vitor Camara Gomes
 - Giovanna Secundo Penso
@@ -51,25 +49,23 @@
 2. [Arquitetura](#-2-arquitetura)
 3. [Tecnologias](#-3-tecnologias)
 4. [Redes do Docker](#-4-redes-do-docker)
-5. [Borda e Segurança](#-5-borda-e-segurança-caddy--crowdsec)
+5. [Borda, Segurança e Gestão de Segredos](#-5-borda-segurança-e-gestão-de-segredos)
 6. [Observabilidade e Disponibilidade](#-6-observabilidade-e-disponibilidade)
 7. [CI/CD: Deploy Automatizado](#-7-cicd-deploy-automatizado)
 8. [Como subir a infraestrutura](#-8-como-subir-a-infraestrutura)
-9. [Limitações e Desafios](#-9-limitações-e-desafios)
+9. [Limitações e Desafios (Engenharia de Resiliência)](#-9-limitações-e-desafios-engenharia-de-resiliência)
 
 ---
 
 ## 🎯 1. Sobre o projeto
 
-O **Castelo** é a infraestrutura que hospeda e protege uma aplicação web DevOps. O objetivo da N1 foi montar, em uma única máquina da AWS, um ambiente que se aproxima de um cenário real de produção:
+O projeto consiste em uma arquitetura de infraestrutura que hospeda, monitora e protege uma aplicação web DevOps. O objetivo foi estruturar, em uma única máquina da AWS, um ambiente que aplica padrões reais de produção:
 
-- **Borda segura:** todo o tráfego entra pelo Caddy (portas 80/443), com HTTPS automático e proteção ativa contra IPs maliciosos via CrowdSec.
-- **Observabilidade:** métricas de CPU, RAM e disco do host coletadas pelo Prometheus e exibidas no Grafana.
-- **Disponibilidade:** Uptime Kuma monitora os serviços e publica uma status page.
-- **Entrega contínua:** a cada push na branch `main`, o GitHub Actions faz o deploy no servidor via SSH.
-- **Isolamento de rede:** três redes Docker segmentam o que é interno, o que é borda e o que é observabilidade.
-
-Tudo isso roda sob uma restrição proposital e desafiadora: **apenas 1 GB de RAM**. Essa limitação gerou o principal aprendizado do projeto (ver [seção 9](#-9-limitações-e-desafios)).
+- **Borda segura:** Todo o tráfego passa pelo Caddy (portas 80/443), com gerenciamento automático de TLS e mitigação ativa contra IPs maliciosos via CrowdSec.
+- **Observabilidade:** Métricas de hardware e sistema (CPU, RAM, disco e rede) extraídas pelo Node Exporter, armazenadas pelo Prometheus e exibidas no Grafana.
+- **Disponibilidade:** O Uptime Kuma monitora a saúde dos containers e publica uma página de status.
+- **Entrega Contínua (CI/CD):** A cada push na branch `main`, o GitHub Actions realiza o deploy automático via SSH utilizando variáveis injetadas por cofre de segredos.
+- **Isolamento de rede:** Três redes Docker separam o tráfego de borda, a comunicação interna da aplicação e a camada de observabilidade.
 
 ---
 
@@ -84,7 +80,7 @@ flowchart TB
         gha["GitHub Actions<br/>appleboy/ssh-action"]
     end
 
-    gha -->|SSH| host
+    gha -->|SSH Autenticado via Secrets| host
 
     subgraph host["☁️ AWS EC2 t2.micro · Ubuntu 26.04 · 1 GB RAM"]
 
@@ -105,114 +101,100 @@ flowchart TB
         end
     end
 
-    caddy -->|rota do site| site
+    caddy -->|rota interna| site
     caddy -. logs de acesso .-> crowdsec
     crowdsec -. bloqueio de IPs .-> caddy
-    kuma -. checa disponibilidade .-> site
-    kuma -. checa disponibilidade .-> caddy
+    kuma -. healthcheck .-> site
+    kuma -. healthcheck .-> caddy
     prometheus -->|scrape| node
     prometheus -->|scrape| crowdsec
     grafana -->|consulta| prometheus
 ```
 
-**Fluxo em uma frase:** o tráfego entra pelo Caddy, que consulta o CrowdSec para barrar IPs maliciosos e roteia para o site; em paralelo, o Node Exporter expõe as métricas do host ao Prometheus, o Grafana as exibe em dashboards e o Uptime Kuma monitora a disponibilidade; a cada `git push`, o GitHub Actions atualiza tudo por SSH.
+**Fluxo resumido:** O tráfego externo entra exclusivamente pelo Caddy, que valida os logs junto ao CrowdSec para bloquear ataques e encaminha requisições legítimas ao container do site. Paralelamente, o Node Exporter coleta métricas do servidor para o Prometheus e Grafana, enquanto atualizações de código no GitHub disparam o deploy automatizado via SSH sem expor credenciais no código-fonte.
 
 ---
 
 ## 🧰 3. Tecnologias
 
-| Camada                | Ferramenta                                 | Função                                                                |
-| --------------------- | ------------------------------------------ | --------------------------------------------------------------------- |
-| Nuvem                 | **AWS EC2** (`t2.micro`)                   | Servidor virtual no Free Tier (1 vCPU, 1 GB RAM)                      |
-| Sistema operacional   | **Ubuntu 26.04 LTS**                       | Base do host                                                          |
-| Containers            | **Docker + Docker Compose**                | Empacotamento e orquestração em um único `docker-compose.yml`         |
-| Borda / proxy reverso | **Caddy**                                  | Roteamento, TLS automático e recebimento do tráfego nas portas 80/443 |
-| WAF / IPS             | **CrowdSec**                               | Lê os logs do Caddy e bloqueia ataques e IPs maliciosos               |
-| Coleta de métricas    | **Prometheus**                             | Armazena e consulta as métricas da máquina                            |
-| Métricas do host      | **Node Exporter**                          | Extrai CPU, RAM e disco do host Ubuntu                                |
-| Dashboards            | **Grafana** (porta `3000`)                 | Visualização com o dashboard comunitário **ID `11074`**               |
-| Disponibilidade       | **Uptime Kuma**                            | Monitoramento de uptime e status page                                 |
-| Aplicação             | **Site DevOps**                            | Aplicação web construída localmente (`build: .`)                      |
-| CI/CD                 | **GitHub Actions** + `appleboy/ssh-action` | Deploy automatizado via SSH                                           |
+| Camada                    | Ferramenta                       | Função                                                     |
+| :------------------------ | :------------------------------- | :--------------------------------------------------------- |
+| **Nuvem**                 | **AWS EC2** (`t2.micro`)         | Servidor virtual no Free Tier (1 vCPU, 1 GB RAM)           |
+| **Sistema Operacional**   | **Ubuntu 26.04 LTS**             | Sistema base do host                                       |
+| **Containers**            | **Docker + Docker Compose**      | Empacotamento e orquestração de múltiplos serviços         |
+| **Borda / Proxy Reverso** | **Caddy**                        | Roteamento HTTP/HTTPS e geração de logs estruturados       |
+| **WAF / IPS**             | **CrowdSec**                     | Análise de logs e bloqueio de ataques na camada de borda   |
+| **Coleta de Métricas**    | **Prometheus**                   | Banco de dados de séries temporais (TSDB) para métricas    |
+| **Métricas do Host**      | **Node Exporter**                | Extração de indicadores de hardware e kernel do host Linux |
+| **Dashboards**            | **Grafana** (porta `3000`)       | Visualização gráfica utilizando o dashboard ID **`11074`** |
+| **Disponibilidade**       | **Uptime Kuma**                  | Monitoramento contínuo de uptime dos serviços              |
+| **Aplicação Web**         | **NGINX Alpine (`Site DevOps`)** | Servidor web leve construído via `Dockerfile` local        |
+| **CI/CD**                 | **GitHub Actions**               | Automação da esteira de deploy via SSH                     |
 
 ---
 
 ## 🔌 4. Redes do Docker
 
-A segmentação de rede é um dos pilares do projeto: cada serviço só enxerga quem precisa enxergar.
+A arquitetura aplica o princípio de privilégio mínimo na camada de rede:
 
-| Rede           | Tipo       | Quem participa                                       | Propósito                                                                                    |
-| -------------- | ---------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `castelo_web`  | `internal` | Site, backend (se houver), Caddy e Uptime Kuma       | Rede **isolada**: sem rota para a internet. Aqui trafega a comunicação da aplicação.         |
-| `castelo_edge` | `bridge`   | Caddy e Uptime Kuma                                  | Camada de **borda**: o ponto de contato com o mundo externo.                                 |
-| `obs`          | `external` | Caddy, CrowdSec, Prometheus, Grafana e Node Exporter | Rede **dedicada à observabilidade**. É externa para poder ser compartilhada entre as stacks. |
-
-**Por que isso importa?**
-
-- O site fica em uma rede `internal`, então não consegue sair para a internet nem ser acessado diretamente de fora — só pelo Caddy.
-- O Caddy é o **único ponto de entrada** (portas 80/443 publicadas).
-- A rede `obs` permite que o CrowdSec leia os logs do Caddy e que o Prometheus/Grafana conversem sem misturar esse tráfego com o da aplicação.
+| Rede           | Tipo       | Serviços Conectados                                  | Propósito                                                                                        |
+| :------------- | :--------- | :--------------------------------------------------- | :----------------------------------------------------------------------------------------------- |
+| `castelo_web`  | `internal` | Site, Caddy e Uptime Kuma                            | **Isolamento total:** Sem rota direta para a internet externa. Protege o container da aplicação. |
+| `castelo_edge` | `bridge`   | Caddy e Uptime Kuma                                  | **Camada de borda:** Único ponto de contato com o tráfego externo.                               |
+| `obs`          | `external` | Caddy, CrowdSec, Prometheus, Grafana e Node Exporter | **Observabilidade e Segurança:** Tráfego isolado para coleta de telemetria e análise de logs.    |
 
 ---
 
-## 🛡️ 5. Borda e Segurança (Caddy + CrowdSec)
+## 🛡️ 5. Borda, Segurança e Gestão de Segredos
 
-### 🚪 Caddy — a porta de entrada
+### 🚪 Caddy & CrowdSec (Defesa em Profundidade)
 
-O Caddy atua como **proxy reverso e roteador de borda**, recebendo todo o tráfego nas portas **80 e 443** e encaminhando para o serviço correto dentro da rede interna. Entre as vantagens: configuração simples (`Caddyfile`), HTTPS automático com certificados gerenciados por ele e logs de acesso estruturados, que alimentam o CrowdSec.
+- O **Caddy** centraliza a entrada nas portas **80 e 443**, ocultando os demais containers.
+- O **CrowdSec** lê continuamente os logs gerados pelo Caddy para detectar padrões de ataque (força bruta, port scanning, exploits) e aplicar bloqueios preventivos.
 
-### 🧱 CrowdSec — WAF / IPS
+### 🔒 Hardening e Sigilo de Credenciais
 
-O CrowdSec funciona em dois tempos:
+Para evitar exposição de dados sensíveis e chaves de infraestrutura em repositórios públicos:
 
-1. **Detecção:** lê os logs de acesso do Caddy e avalia o comportamento das requisições (varreduras, força bruta, exploração de vulnerabilidades conhecidas).
-2. **Bloqueio:** IPs identificados como maliciosos são barrados na borda, antes de chegarem à aplicação.
-
-### 🔒 Boas práticas de hardening
-
-- Rede da aplicação **interna**, sem acesso externo direto.
-- Apenas o Caddy publica as portas 80/443 para a internet.
-- Segredos fora do repositório (chaves SSH e variáveis sensíveis em **GitHub Secrets** / arquivo `.env` ignorado no git).
-- Política de reinício dos containers (`restart: always` / `unless-stopped`) para auto-recuperação.
+- **Desacoplamento de IP e Credenciais:** Nenhum endereço IP público, senha ou chave criptográfica é declarado de forma estática (_hardcoded_) nos arquivos do repositório.
+- **Proteção via `.gitignore`:** Chaves privadas SSH (`*.pem`, `*.key`) e arquivos de variáveis locais (`.env`) são bloqueados no versionamento local antes de qualquer commit.
+- **Injeção Segura no CI/CD:** A autenticação entre o GitHub e a AWS utiliza exclusivamente o cofre criptografado do **GitHub Actions Secrets**.
+- **Auto-recuperação:** Todos os serviços operam com políticas `restart: always` ou `unless-stopped`.
 
 ---
 
 ## 📊 6. Observabilidade e Disponibilidade
 
-### 📈 Métricas: Node Exporter → Prometheus → Grafana
+### 📈 Pipeline de Métricas
 
-| Componente            | Papel                                                                    |
-| --------------------- | ------------------------------------------------------------------------ |
-| **Node Exporter**     | Agente que extrai CPU, RAM e disco do host Ubuntu                        |
-| **Prometheus**        | Faz o _scrape_ periódico do Node Exporter e armazena as séries temporais |
-| **Grafana** (`:3000`) | Consome o Prometheus como _datasource_ e exibe os dados                  |
+1. **Node Exporter:** Coleta o uso de CPU, memória RAM e I/O de disco do host.
+2. **Prometheus:** Realiza o _scrape_ periódico das métricas.
+3. **Grafana:** Consome os dados do Prometheus e os apresenta no dashboard comunitário **ID `11074`** (_Node Exporter Full_).
 
-Para a visualização, usamos o **dashboard comunitário ID `11074`** (Node Exporter for Prometheus Dashboard), que entrega painéis prontos de CPU, memória, disco e rede — exatamente o que precisávamos para enxergar o comportamento da máquina durante o incidente de falta de RAM.
+> 💡 **Configuração do Painel:** No Grafana (`http://<SEU_IP_PUBLICO>:3000`), acesse _Dashboards → New → Import_, insira o ID `11074` e selecione a fonte de dados do Prometheus.
 
-> 💡 **Como importar:** no Grafana, vá em _Dashboards → New → Import_, informe o ID `11074` e selecione o datasource do Prometheus.
+### ✅ Monitoramento de Uptime
 
-### ✅ Disponibilidade: Uptime Kuma
-
-O **Uptime Kuma** monitora a disponibilidade dos serviços (site, Caddy etc.), registra o histórico de uptime, permite alertas de queda e publica uma **status page**. Ele participa das redes `castelo_web` e `castelo_edge` para alcançar os alvos internos e ser servido pelo Caddy.
+O **Uptime Kuma** verifica internamente a resposta do container web e do proxy reverso, oferecendo uma interface visual de disponibilidade em tempo real.
 
 ---
 
 ## 🚀 7. CI/CD: Deploy Automatizado
 
-O deploy é feito com **GitHub Actions**, disparado a cada push na branch `main`. A pipeline se conecta ao servidor por **SSH** usando a action [`appleboy/ssh-action`](https://github.com/appleboy/ssh-action) e executa os comandos de atualização diretamente na instância EC2.
+O pipeline em `.github/workflows/deploy.yml` é acionado automaticamente a cada `push` na branch `main`, conectando-se à instância EC2 via SSH para atualizar os containers.
 
-### 🔐 Secrets utilizados
+### 🔐 Variáveis de Ambiente e Secrets
 
-Configurados em _Settings → Secrets and variables → Actions_:
+Configurados de forma privada no repositório (_Settings → Secrets and variables → Actions_):
 
-| Secret     | Conteúdo                                |
-| ---------- | --------------------------------------- |
-| `HOST`     | IP público (ou DNS) da instância EC2    |
-| `USERNAME` | Usuário SSH do servidor (ex.: `ubuntu`) |
-| `KEY`      | Chave privada SSH usada na autenticação |
-| `PORT`     | Porta SSH (padrão `22`)                 |
+| Secret     | Descrição                                                    |
+| :--------- | :----------------------------------------------------------- |
+| `HOST`     | Endereço IP público ou DNS da instância EC2                  |
+| `USERNAME` | Usuário padrão da instância Linux (ex.: `ubuntu`)            |
+| `KEY`      | Conteúdo da chave privada SSH (`.pem`) exclusiva para deploy |
+| `PORT`     | Porta de conexão SSH (padrão: `22`)                          |
 
-### 🔄 Fluxo da pipeline
+### 🔄 Fluxo da Esteira
 
 ```mermaid
 sequenceDiagram
@@ -222,147 +204,101 @@ sequenceDiagram
     participant EC2 as AWS EC2
 
     Dev->>GH: git push origin main
-    GH->>GA: dispara o workflow
-    GA->>EC2: SSH (appleboy/ssh-action + Secrets)
+    GH->>GA: Aciona workflow CI/CD
+    GA->>EC2: Conexão SSH (Injetando Secrets: HOST, KEY)
     EC2->>EC2: git pull origin main
-    EC2->>EC2: docker compose up -d --build
-    EC2-->>GA: resultado do deploy
+    EC2->>EC2: sudo docker compose up -d --build
+    EC2-->>GA: Confirmação de containers ativos
 ```
 
-### 📄 Exemplo de workflow (`.github/workflows/deploy.yml`)
+### 📄 Estrutura do Workflow (`.github/workflows/deploy.yml`)
 
+```yaml
 name: Deploy
 
 on:
-push:
-branches: [main]
+  push:
+    branches: [main]
 
 jobs:
-deploy:
-runs-on: ubuntu-latest
-steps: - name: Deploy via SSH
-uses: appleboy/ssh-action@v1
-with:
-host: ${{ secrets.HOST }}
-username: ${{ secrets.USERNAME }}
-key: ${{ secrets.KEY }}
-port: ${{ secrets.PORT }}
-script: |
-cd ~/projeto-devops
-git pull origin main
-docker compose up -d --build
-
-````
-
-> ⚠️ Ajuste `<pasta-do-projeto>` para o diretório onde o repositório foi clonado no servidor. Este é um exemplo ilustrativo — confira se bate com o seu workflow real.
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH na AWS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            cd ~/projeto-devops
+            git pull origin main
+            sudo docker compose up -d --build
+```
 
 ---
 
 ## ▶️ 8. Como subir a infraestrutura
 
-**Pré-requisitos**
+### Pré-requisitos
 
-- Instância EC2 com Ubuntu, Docker e Docker Compose instalados.
-- Security Group liberando as portas `22` (SSH), `80`, `443` e, se necessário, `3000` (Grafana — preferencialmente restrita ao seu IP).
-- Arquivo `.env` preenchido (quando aplicável), fora do versionamento.
+- Instância AWS EC2 (Ubuntu) com Docker e Docker Compose instalados.
+- **Security Group** configurado permitindo tráfego nas portas: `22` (SSH), `80` (HTTP), `443` (HTTPS) e `3000` (Grafana).
+- Arquivo `.gitignore` ativo na raiz do projeto contendo `*.pem` e `.env`.
+
+### Passo a passo no servidor
 
 ```bash
-# 1. Clonar o repositório no servidor
-git clone https://github.com/Buzzidd/projeto-devops.git
+# 1. Clonar o repositório na instância EC2
+git clone [https://github.com/Buzzidd/projeto-devops.git](https://github.com/Buzzidd/projeto-devops.git)
 cd projeto-devops
 
-# 2. Criar a rede externa de observabilidade (uma única vez)
-docker network create obs
+# 2. Criar a rede externa de observabilidade
+sudo docker network create obs
 
-# 3. Subir toda a infraestrutura
-docker compose up -d --build
+# 3. Construir e iniciar os containers em background
+sudo docker compose up -d --build
 
-# 4. Verificar o estado dos containers
-docker compose ps
+# 4. Validar o status de execução dos 7 containers
+sudo docker compose ps
 
-# 5. Acompanhar o consumo de memória (importante em 1 GB de RAM!)
+# 5. Monitorar o consumo de RAM do host
 free -h
-docker stats --no-stream
-````
-
-**Verificação rápida**
-
-```bash
-curl -I http://localhost          # resposta do Caddy / site
-docker compose logs -f caddy      # logs de acesso
+sudo docker stats --no-stream
 ```
 
-Depois de subir, acesse o **Grafana** em `18.191.162.150:3000`, adicione o Prometheus como datasource e importe o dashboard **`11074`**.
+### Verificação de Acesso
+
+- **Aplicação Principal:** `http://<SEU_IP_PUBLICO>`
+- **Painel Grafana:** `http://<SEU_IP_PUBLICO>:3000`
 
 ---
 
-## ⚠️ 9. Limitações e Desafios
+## ⚠️ 9. Limitações e Desafios (Engenharia de Resiliência)
 
-Esta seção documenta, sem filtro, o que deu errado e como foi tratado — a parte mais didática do projeto.
+### 🧠 O Gargalo de 1 GB de RAM durante o CI/CD
 
-### 🧠 Gargalo de RAM
+A instância `t2.micro` possui apenas **1 GB de RAM**. Embora suporte os 7 containers em execução normal, o comando `docker compose up -d --build` disparado pelo GitHub Actions exige compilação de imagem simultânea aos serviços ativos, gerando um pico de consumo que esgota a memória física e aciona travamentos por falta de recursos (_Run Command Timeout_ / _DeadlineExceeded_).
 
-A `t2.micro` tem **apenas 1 GB de RAM**, e todos os serviços (Caddy, CrowdSec, Prometheus, Node Exporter, Grafana, Uptime Kuma e o site) rodam juntos nela. Em operação normal, o ambiente cabe — mas **sem folga**.
+### 🛠️ Mitigação e Recuperação Automática
 
-O problema apareceu no **CI/CD**: o comando `docker compose up -d --build` faz o _build_ da imagem e recria containers **enquanto toda a stack continua rodando**. O pico de memória gerado por essa combinação **esgotou totalmente a RAM** do servidor.
-
-### 🧊 O congelamento
-
-Com a memória esgotada, o servidor travou e parou de responder. Do lado do GitHub, a pipeline falhou com o erro:
-
-```
-DeadlineExceeded
-```
-
-ou seja, a action não conseguiu concluir a conexão/execução no prazo, pois a máquina estava congelada.
-
-### 🛠️ Solução aplicada
-
-1. **Reinício forçado (reboot)** da instância pelo console da AWS.
-2. Graças às políticas **`restart: always`** e **`unless-stopped`** definidas no Compose, **toda a infraestrutura se recuperou sozinha** após o boot, sem intervenção manual nos containers.
-
-> ✅ **Lição:** definir políticas de reinício não é detalhe — foi isso que transformou um travamento total em uma recuperação automática.
-
-### 🔜 Próximo passo planejado: arquivo de SWAP
-
-Para evitar novos travamentos causados pelo **OOM Killer** do Linux, o plano é criar um **arquivo de SWAP** no disco SSD da AWS, funcionando como memória de apoio durante picos (como o build do deploy).
+1. **Políticas de Restart:** Graças ao parâmetro `restart: always` / `unless-stopped`, após o reinício da instância pelo console da AWS, o Docker daemon restaura todos os 7 containers automaticamente sem intervenção manual.
+2. **Alocação de Memória SWAP (Solução Implementada/Planejada):** Criação de uma partição/arquivo de SWAP de 2 GB em disco para absorver picos de consumo durante o build da esteira CI/CD, evitando o congelamento do sistema operacional:
 
 ```bash
-# Exemplo de criação de 2 GB de swap
 sudo fallocate -l 2G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
-
-# Tornar permanente
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
-
-# Conferir
-free -h
 ```
-
-> ⚠️ O swap é um **amortecedor**, não um substituto de RAM: por usar disco, é mais lento. Ele reduz o risco de travamento, mas não elimina o gargalo.
-
-### 📌 Outras limitações conhecidas
-
-- **Servidor único, sem alta disponibilidade:** se a instância cai, tudo cai — não há failover.
-- **Build no próprio servidor:** compilar imagens na máquina de produção compete por RAM com os serviços em execução.
-- **Segredos em arquivos `.env`:** adequado para o escopo da disciplina, mas sem cofre de segredos (Vault/SOPS).
-
-### 🧭 Melhorias futuras sugeridas
-
-- Criar o **swap** (próximo passo já planejado).
-- Mover o **build para o GitHub Actions**, publicar a imagem em um registry (ex.: GHCR) e deixar o servidor apenas fazer `pull` — evitando o pico de memória na `t2.micro`.
-- Definir **limites de memória** (`mem_limit`) por container para que um serviço não derrube os demais.
-- Configurar **alertas** (Grafana/Alertmanager ou Uptime Kuma) para consumo alto de RAM e quedas de serviço.
-- Avaliar uma instância maior (ex.: `t3.small`) caso o projeto evolua além do Free Tier.
 
 ---
 
 <div align="center">
 
-🏰 **Projeto Devops** · Cloud Computing · Centro Universitário Faculdade São Lucas
-
-Desenvolvido por **Carlos Vitor Camara Gomes** & **Giovanna Secundo Penso** e equipe.
+🏰 **Projeto DevOps** · Cloud Computing · Centro Universitário Faculdade São Lucas  
+Desenvolvido por **Carlos Vitor Camara Gomes**, **Giovanna Secundo Penso** e equipe.
 
 </div>
