@@ -1,0 +1,43 @@
+---
+- name: Preparar servidor Linux e implantar projeto DevOps
+  hosts: servidor_web
+  become: yes
+
+  tasks:
+    - name: Atualizar cache do apt e instalar Docker, Docker Compose e Git
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - docker-compose-v2
+          - git
+        state: present
+        update_cache: yes
+
+    - name: Garantir que o serviço Docker esteja ativo
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Adicionar usuário ubuntu ao grupo docker
+      ansible.builtin.user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Criar rede Docker externa 'obs' se não existir
+      ansible.builtin.shell: |
+        docker network inspect obs >/dev/null 2>&1 || docker network create obs
+      changed_when: false
+
+    - name: Clonar ou atualizar o repositório da N1
+      ansible.builtin.git:
+        repo: https://github.com/Buzzidd/projeto-devops.git
+        dest: /home/ubuntu/projeto-devops
+        version: main
+        force: yes
+
+    - name: Subir os containers com Docker Compose
+      ansible.builtin.command:
+        cmd: docker compose up -d --build
+        chdir: /home/ubuntu/projeto-devops

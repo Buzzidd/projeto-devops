@@ -1,7 +1,8 @@
-# 🏰 Projeto DevOps — Infraestrutura Cloud & Observabilidade na AWS
+# 🏰 Projeto DevOps — Infraestrutura Cloud, Observabilidade & Automação (Ansible) na AWS
 
-> Infraestrutura self-hosted em uma única instância **AWS EC2 (`t2.micro`)** que entrega uma aplicação web com borda protegida (Proxy Reverso + WAF), observabilidade completa de métricas, monitoramento de disponibilidade e **deploy automatizado via GitHub Actions**. Tudo orquestrado com Docker Compose, rodando dentro do limite de **1 GB de RAM** do Free Tier.
+> Infraestrutura self-hosted em uma única instância **AWS EC2 (`t3.micro`)** que entrega uma aplicação web com borda protegida (Proxy Reverso + WAF), observabilidade completa de métricas, monitoramento de disponibilidade, **provisionamento automatizado com Ansible (N2)** e **deploy contínuo via GitHub Actions (N1)**. Tudo orquestrado com Docker Compose dentro do limite de **1 GB de RAM** do Free Tier.
 
+![Ansible](https://img.shields.io/badge/Ansible-EE0000?logo=ansible&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS%20EC2-FF9900?logo=amazonaws&logoColor=white)
 ![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white)
@@ -16,17 +17,18 @@
 
 ## 📋 Informações Acadêmicas e Técnicas
 
-| Item                      | Valor                                                |
-| :------------------------ | :--------------------------------------------------- |
-| **Alunos responsáveis**   | Carlos Vitor Camara Gomes e Giovanna Secundo Penso   |
-| **Instituição**           | Centro Universitário Faculdade São Lucas             |
-| **Disciplina**            | Cloud Computing                                      |
-| **Avaliação**             | N1                                                   |
-| **Provedor Cloud**        | AWS EC2 — instância `t3.micro` (Free Tier)           |
-| **Sistema Operacional**   | Ubuntu 26.04 LTS                                     |
-| **Recursos da Instância** | 1 vCPU · **1 GB de RAM**                             |
-| **Orquestração**          | Docker + Docker Compose (`docker-compose.yml` único) |
-| **Repositório**           | `https://github.com/Buzzidd/projeto-devops`          |
+| Item                      | Valor                                                   |
+| :------------------------ | :------------------------------------------------------ |
+| **Alunos responsáveis**   | Carlos Vitor Camara Gomes e Giovanna Secundo Penso      |
+| **Instituição**           | Centro Universitário Faculdade São Lucas                |
+| **Disciplina**            | Devops e Computação em Nuvem                            |
+| **Avaliação**             | N1 e N2                                                 |
+| **Provedor Cloud**        | AWS EC2 — instância `t3.micro` (Free Tier)              |
+| **Sistema Operacional**   | Ubuntu 26.04 LTS                                        |
+| **Recursos da Instância** | 2 vCPUs · **1 GB de RAM** (+ 2 GB Swap) · **15 GB EBS** |
+| **Provisionamento (IaC)** | Ansible (`ansible/playbook.yml`)                        |
+| **Orquestração**          | Docker + Docker Compose (`docker-compose.yml` único)    |
+| **Repositório**           | `https://github.com/Buzzidd/projeto-devops`             |
 
 ### 👥 Equipe Completa
 
@@ -52,15 +54,17 @@
 5. [Borda, Segurança e Gestão de Segredos](#-5-borda-segurança-e-gestão-de-segredos)
 6. [Observabilidade e Disponibilidade](#-6-observabilidade-e-disponibilidade)
 7. [CI/CD: Deploy Automatizado](#-7-cicd-deploy-automatizado)
-8. [Como subir a infraestrutura](#-8-como-subir-a-infraestrutura)
-9. [Limitações e Desafios (Engenharia de Resiliência)](#-9-limitações-e-desafios-engenharia-de-resiliência)
+8. [Automação de Infraestrutura com Ansible (N2)](#-8-automação-de-infraestrutura-com-ansible-n2)
+9. [Como subir a infraestrutura manualmente](#-9-como-subir-a-infraestrutura-manualmente)
+10. [Limitações e Desafios (Engenharia de Resiliência)](#-10-limitações-e-desafios-engenharia-de-resiliência)
 
 ---
 
 ## 🎯 1. Sobre o projeto
 
-O projeto consiste em uma arquitetura de infraestrutura que hospeda, monitora e protege uma aplicação web DevOps. O objetivo foi estruturar, em uma única máquina da AWS, um ambiente que aplica padrões reais de produção:
+O projeto consiste em uma arquitetura de infraestrutura que hospeda, monitora, protege e provisiona automaticamente uma aplicação web DevOps. O objetivo foi estruturar, em uma única máquina da AWS, um ambiente reproduzível que aplica padrões reais de produção:
 
+- **Provisionamento Reproduzível (N2):** Um playbook **Ansible** prepara qualquer servidor Ubuntu limpo do zero — instalando dependências, configurando Docker, criando a rede externa, clonando o repositório e subindo os 7 containers de forma idempotente.
 - **Borda segura:** Todo o tráfego passa pelo Caddy (portas 80/443), com gerenciamento automático de TLS e mitigação ativa contra IPs maliciosos via CrowdSec.
 - **Observabilidade:** Métricas de hardware e sistema (CPU, RAM, disco e rede) extraídas pelo Node Exporter, armazenadas pelo Prometheus e exibidas no Grafana.
 - **Disponibilidade:** O Uptime Kuma monitora a saúde dos containers e publica uma página de status.
@@ -75,14 +79,20 @@ O projeto consiste em uma arquitetura de infraestrutura que hospeda, monitora e 
 flowchart TB
     user([🌐 Internet]) -->|HTTP/HTTPS 80 · 443| caddy
     dev([👨‍💻 Desenvolvedor]) -->|git push main| gha
+    dev -->|ansible-playbook| ansible
 
     subgraph github["GitHub"]
         gha["GitHub Actions<br/>appleboy/ssh-action"]
     end
 
-    gha -->|SSH Autenticado via Secrets| host
+    subgraph iac["Automação (WSL / Codespaces)"]
+        ansible["Ansible<br/>playbook.yml · inventory.ini"]
+    end
 
-    subgraph host["☁️ AWS EC2 t2.micro · Ubuntu 26.04 · 1 GB RAM"]
+    gha -->|Deploy contínuo via SSH Secrets| host
+    ansible -->|Provisionamento inicial via SSH .pem| host
+
+    subgraph host["☁️ AWS EC2 t3.micro · Ubuntu 26.04 · 1 GB RAM + 2 GB Swap · 15 GB EBS"]
 
         subgraph edge["rede castelo_edge (bridge)"]
             caddy["Caddy<br/>Proxy reverso · TLS"]
@@ -111,25 +121,26 @@ flowchart TB
     grafana -->|consulta| prometheus
 ```
 
-**Fluxo resumido:** O tráfego externo entra exclusivamente pelo Caddy, que valida os logs junto ao CrowdSec para bloquear ataques e encaminha requisições legítimas ao container do site. Paralelamente, o Node Exporter coleta métricas do servidor para o Prometheus e Grafana, enquanto atualizações de código no GitHub disparam o deploy automatizado via SSH sem expor credenciais no código-fonte.
+**Fluxo resumido:** O **Ansible** prepara o servidor Linux do zero e sobe a stack completa via SSH. Com o ambiente no ar, o tráfego externo entra exclusivamente pelo Caddy, que valida os logs junto ao CrowdSec para bloquear ataques e encaminha requisições legítimas ao container do site. Paralelamente, o Node Exporter coleta métricas do servidor para o Prometheus e Grafana, enquanto atualizações de código no GitHub disparam o deploy automatizado via GitHub Actions sem expor credenciais no código-fonte.
 
 ---
 
 ## 🧰 3. Tecnologias
 
-| Camada                    | Ferramenta                       | Função                                                     |
-| :------------------------ | :------------------------------- | :--------------------------------------------------------- |
-| **Nuvem**                 | **AWS EC2** (`t2.micro`)         | Servidor virtual no Free Tier (1 vCPU, 1 GB RAM)           |
-| **Sistema Operacional**   | **Ubuntu 26.04 LTS**             | Sistema base do host                                       |
-| **Containers**            | **Docker + Docker Compose**      | Empacotamento e orquestração de múltiplos serviços         |
-| **Borda / Proxy Reverso** | **Caddy**                        | Roteamento HTTP/HTTPS e geração de logs estruturados       |
-| **WAF / IPS**             | **CrowdSec**                     | Análise de logs e bloqueio de ataques na camada de borda   |
-| **Coleta de Métricas**    | **Prometheus**                   | Banco de dados de séries temporais (TSDB) para métricas    |
-| **Métricas do Host**      | **Node Exporter**                | Extração de indicadores de hardware e kernel do host Linux |
-| **Dashboards**            | **Grafana** (porta `3000`)       | Visualização gráfica utilizando o dashboard ID **`11074`** |
-| **Disponibilidade**       | **Uptime Kuma**                  | Monitoramento contínuo de uptime dos serviços              |
-| **Aplicação Web**         | **NGINX Alpine (`Site DevOps`)** | Servidor web leve construído via `Dockerfile` local        |
-| **CI/CD**                 | **GitHub Actions**               | Automação da esteira de deploy via SSH                     |
+| Camada                    | Ferramenta                       | Função                                                            |
+| :------------------------ | :------------------------------- | :---------------------------------------------------------------- |
+| **Provisionamento (IaC)** | **Ansible**                      | Configuração automatizada e idempotente do servidor Linux via SSH |
+| **Nuvem**                 | **AWS EC2** (`t3.micro`)         | Servidor virtual no Free Tier (2 vCPUs, 1 GB RAM, 15 GB EBS)      |
+| **Sistema Operacional**   | **Ubuntu 26.04 LTS**             | Sistema base do host                                              |
+| **Containers**            | **Docker + Docker Compose**      | Empacotamento e orquestração de múltiplos serviços                |
+| **Borda / Proxy Reverso** | **Caddy**                        | Roteamento HTTP/HTTPS e geração de logs estruturados              |
+| **WAF / IPS**             | **CrowdSec**                     | Análise de logs e bloqueio de ataques na camada de borda          |
+| **Coleta de Métricas**    | **Prometheus**                   | Banco de dados de séries temporais (TSDB) para métricas           |
+| **Métricas do Host**      | **Node Exporter**                | Extração de indicadores de hardware e kernel do host Linux        |
+| **Dashboards**            | **Grafana** (porta `3000`)       | Visualização gráfica utilizando o dashboard ID **`11074`**        |
+| **Disponibilidade**       | **Uptime Kuma**                  | Monitoramento contínuo de uptime dos serviços                     |
+| **Aplicação Web**         | **NGINX Alpine (`Site DevOps`)** | Servidor web leve construído via `Dockerfile` local               |
+| **CI/CD**                 | **GitHub Actions**               | Automação da esteira de deploy via SSH                            |
 
 ---
 
@@ -156,8 +167,7 @@ A arquitetura aplica o princípio de privilégio mínimo na camada de rede:
 
 Para evitar exposição de dados sensíveis e chaves de infraestrutura em repositórios públicos:
 
-- **Desacoplamento de IP e Credenciais:** Nenhum endereço IP público, senha ou chave criptográfica é declarado de forma estática (_hardcoded_) nos arquivos do repositório.
-- **Proteção via `.gitignore`:** Chaves privadas SSH (`*.pem`, `*.key`) e arquivos de variáveis locais (`.env`) são bloqueados no versionamento local antes de qualquer commit.
+- **Proteção via `.gitignore`:** Chaves privadas SSH (`*.pem`) e arquivos de variáveis locais (`.env`) são bloqueados no versionamento local antes de qualquer commit.
 - **Injeção Segura no CI/CD:** A autenticação entre o GitHub e a AWS utiliza exclusivamente o cofre criptografado do **GitHub Actions Secrets**.
 - **Auto-recuperação:** Todos os serviços operam com políticas `restart: always` ou `unless-stopped`.
 
@@ -239,15 +249,64 @@ jobs:
 
 ---
 
-## ▶️ 8. Como subir a infraestrutura
+## 🤖 8. Automação de Infraestrutura com Ansible (N2)
 
-### Pré-requisitos
+Para eliminar a configuração manual da instância EC2 e garantir que toda a infraestrutura possa ser recriada em qualquer servidor Ubuntu zerado, foi adicionada a camada de automação na pasta `ansible/`.
 
-- Instância AWS EC2 (Ubuntu) com Docker e Docker Compose instalados.
-- **Security Group** configurado permitindo tráfego nas portas: `22` (SSH), `80` (HTTP), `443` (HTTPS) e `3000` (Grafana).
-- Arquivo `.gitignore` ativo na raiz do projeto contendo `*.pem` e `.env`.
+### 📁 Estrutura da Pasta `ansible/`
 
-### Passo a passo no servidor
+| Arquivo         | Função                                                                 |
+| :-------------- | :--------------------------------------------------------------------- |
+| `ansible.cfg`   | Configurações padrão do Ansible (inventário e desativação de host key) |
+| `inventory.ini` | Define o IP público do servidor alvo, usuário SSH e caminho da `.pem`  |
+| `playbook.yml`  | Roteiro declarativo que provisiona o servidor e sobe toda a stack      |
+
+### ⚙️ Tarefas Automatizadas pelo `playbook.yml`
+
+1. Atualização do cache `apt` e instalação do **Docker**, **Docker Compose** e **Git**.
+2. Garantia de que o serviço `docker` esteja ativo e habilitado no boot.
+3. Inclusão do usuário `ubuntu` no grupo `docker`.
+4. Criação idempotente da rede externa `obs` (se ainda não existir).
+5. Clonagem ou atualização automática do repositório `projeto-devops` na instância.
+6. Build e inicialização dos 7 containers com `docker compose up -d --build`.
+
+### 📋 Pré-requisitos da Instância Alvo
+
+- **Instância AWS EC2 (Ubuntu)** com no mínimo **15 GiB** de volume EBS (o padrão de 8 GiB esgota durante a extração de imagens como Grafana e Prometheus).
+- **Security Group** com regras de entrada liberando as portas: `22` (SSH), `80` (HTTP), `443` (HTTPS) e `3000` (Grafana) para `0.0.0.0/0`.
+- **Máquina de controle:** Linux, **WSL (Ubuntu no Windows)** ou **GitHub Codespaces** com Ansible instalado (`sudo apt update && sudo apt install ansible -y`).
+
+### ▶️ Passo a Passo de Execução
+
+```bash
+# 1. Mover a chave privada SSH e restringir permissões
+chmod 400 ~/.ssh/deploy-devops-v2.pem
+
+# 2. Entrar na pasta do Ansible (ajuste o IP e a chave no inventory.ini se necessário)
+cd ansible
+
+# 3. Testar a comunicação SSH do Ansible com a instância EC2
+ANSIBLE_HOST_KEY_CHECKING=False ansible -i inventory.ini all -m ping
+
+# 4. Executar o playbook de provisionamento e deploy completo
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventory.ini playbook.yml
+
+# 5. Validar remotamente os 7 containers em execução
+ANSIBLE_HOST_KEY_CHECKING=False ansible -i inventory.ini all -b -m command -a "docker ps"
+```
+
+> 💡 **Dica para demonstração em sala (GitHub Codespaces):** Caso o computador não tenha WSL configurado ou a rede local bloqueie a porta `22`, abra o repositório no **GitHub Codespaces**, instale o Ansible no terminal Linux do navegador, carregue a chave `.pem` temporariamente (sem fazer commit) e execute os mesmos comandos acima.
+
+### ✅ Verificação de Acesso
+
+- **Aplicação Principal:** `http://<SEU_IP_PUBLICO>`
+- **Painel Grafana:** `http://<SEU_IP_PUBLICO>:3000`
+
+---
+
+## ▶️ 9. Como subir a infraestrutura manualmente
+
+Caso seja necessário subir a aplicação diretamente dentro do servidor sem utilizar o Ansible:
 
 ```bash
 # 1. Clonar o repositório na instância EC2
@@ -263,28 +322,28 @@ sudo docker compose up -d --build
 # 4. Validar o status de execução dos 7 containers
 sudo docker compose ps
 
-# 5. Monitorar o consumo de RAM do host
+# 5. Monitorar o consumo de RAM e disco do host
 free -h
+df -h /
 sudo docker stats --no-stream
 ```
 
-### Verificação de Acesso
-
-- **Aplicação Principal:** `http://<SEU_IP_PUBLICO>`
-- **Painel Grafana:** `http://<SEU_IP_PUBLICO>:3000`
-
 ---
 
-## ⚠️ 9. Limitações e Desafios (Engenharia de Resiliência)
+## ⚠️ 10. Limitações e Desafios (Engenharia de Resiliência)
 
-### 🧠 O Gargalo de 1 GB de RAM durante o CI/CD
+### 🧠 Gargalo de 1 GB de RAM durante o CI/CD e Execução Simultânea
 
-A instância `t2.micro` possui apenas **1 GB de RAM**. Embora suporte os 7 containers em execução normal, o comando `docker compose up -d --build` disparado pelo GitHub Actions exige compilação de imagem simultânea aos serviços ativos, gerando um pico de consumo que esgota a memória física e aciona travamentos por falta de recursos (_Run Command Timeout_ / _DeadlineExceeded_).
+A instância `t3.micro` possui apenas **1 GB de RAM**. Embora suporte os 7 containers em execução normal, o comando `docker compose up -d --build` disparado pelo GitHub Actions ou pelo Ansible exige compilação de imagem simultânea aos serviços ativos, gerando picos de consumo que esgotam a memória física e causam travamentos (_Run Command Timeout_ / _Connection timed out_).
 
-### 🛠️ Mitigação e Recuperação Automática
+### 💾 Limite do Disco Padrão de 8 GiB na AWS
 
-1. **Políticas de Restart:** Graças ao parâmetro `restart: always` / `unless-stopped`, após o reinício da instância pelo console da AWS, o Docker daemon restaura todos os 7 containers automaticamente sem intervenção manual.
-2. **Alocação de Memória SWAP (Solução Implementada/Planejada):** Criação de uma partição/arquivo de SWAP de 2 GB em disco para absorver picos de consumo durante o build da esteira CI/CD, evitando o congelamento do sistema operacional:
+Durante a execução do playbook em disco padrão de 8 GiB, a extração simultânea das camadas das imagens do **Grafana**, **Prometheus**, **CrowdSec**, **Uptime Kuma** e **Caddy** levou o volume raiz (`/dev/root`) a **100% de ocupação** (`no space left on device`), interrompendo o deploy e até conexões Ansible.
+
+### 🛠️ Mitigações Aplicadas
+
+1. **Expansão do Volume EBS para 15 GiB:** Aumento do disco da instância de 8 GiB para **15 GiB** (mantendo-se dentro do limite gratuito de 30 GiB do Free Tier) combinado com limpeza de cache (`docker system prune -af`), reduzindo a ocupação do disco para menos de 30%.
+2. **Alocação de 2 GB de Memória SWAP:** Criação de um arquivo de SWAP permanente em disco para absorver picos de consumo durante builds e evitar o congelamento da máquina:
 
 ```bash
 sudo fallocate -l 2G /swapfile
@@ -293,6 +352,8 @@ sudo mkswap /swapfile
 sudo swapon /swapfile
 echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 ```
+
+3. **Políticas de Restart:** Graças ao parâmetro `restart: always` / `unless-stopped`, após qualquer reinício da instância pelo console da AWS, o Docker daemon restaura todos os 7 containers automaticamente sem intervenção manual.
 
 ---
 
