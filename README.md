@@ -301,6 +301,23 @@ ANSIBLE_HOST_KEY_CHECKING=False ansible -i inventory.ini all -b -m command -a "d
 
 - **Aplicação Principal:** `http://<SEU_IP_PUBLICO>`
 - **Painel Grafana:** `http://<SEU_IP_PUBLICO>:3000`
+- **Servidor atual da demonstração:** `http://3.15.206.110` (Grafana em `http://3.15.206.110:3000`)
+
+### 📸 Evidências da Execução (N2)
+
+Execução real do playbook em 24/11/2026, no servidor `3.15.206.110`. Os prints ficam na pasta [`evidencias/`](evidencias/).
+
+| # | O que mostra | Print |
+| :- | :----------- | :---- |
+| 1 | `ansible-playbook` concluído: **PLAY RECAP** com `ok=7 changed=1 unreachable=0 failed=0` | [1-playbook-executado.jpeg](evidencias/1-playbook-executado.jpeg) |
+| 2 | `docker ps` rodado pelo Ansible: os **7 containers** com status `Up` | [2-docker-ps-7-containers.jpeg](evidencias/2-docker-ps-7-containers.jpeg) |
+| 3 | **Grafana** na porta `3000` com o dashboard **11074** (Node Exporter) | [3-grafana-porta-3000.jpeg](evidencias/3-grafana-porta-3000.jpeg) |
+| 4 | **Aplicação no ar** por HTTP em `http://3.15.206.110` | [4-site-no-ar.jpeg](evidencias/4-site-no-ar.jpeg) |
+
+![Playbook executado com failed=0](evidencias/1-playbook-executado.jpeg)
+![docker ps com os 7 containers](evidencias/2-docker-ps-7-containers.jpeg)
+![Grafana na porta 3000](evidencias/3-grafana-porta-3000.jpeg)
+![Aplicação no ar em http://3.15.206.110](evidencias/4-site-no-ar.jpeg)
 
 ---
 
