@@ -18,17 +18,16 @@
 ## 📋 Informações Acadêmicas e Técnicas
 
 
+| Item                      | Valor                                                   |
 | :------------------------ | :------------------------------------------------------ |
-| **Alunos responsáveis**   | Carlos Vitor Camara Gomes e Giovanna Secundo Penso      |
 | **Instituição**           | Centro Universitário Faculdade São Lucas                |
-| **Disciplina**            | Devops e Computação em Nuvem                            |
+| **Disciplina**            | Cloud Computing                                         |
 | **Avaliação**             | N1 e N2                                                 |
 | **Provedor Cloud**        | AWS EC2 — instância `t3.micro` (Free Tier)              |
 | **Sistema Operacional**   | Ubuntu 26.04 LTS                                        |
 | **Recursos da Instância** | 2 vCPUs · **1 GB de RAM** (+ 2 GB Swap) · **15 GB EBS** |
 | **Provisionamento (IaC)** | Ansible (`ansible/playbook.yml`)                        |
-| **Orquestração**          | Docker + Docker Compose (`docker-compose.yml` único)    |
-| **Repositório**           | `https://github.com/Buzzidd/projeto-devops`             |
+
 
 ### 👥 Equipe Completa
 
