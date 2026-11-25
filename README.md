@@ -17,6 +17,7 @@
 
 ## 📋 Informações Acadêmicas e Técnicas
 
+
 | :------------------------ | :------------------------------------------------------ |
 | **Instituição**           | Centro Universitário Faculdade São Lucas                |
 | **Disciplina**            | Devops e Computação em Nuvem                            |
