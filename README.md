@@ -19,7 +19,6 @@
 
 | Item                      | Valor                                                   |
 | :------------------------ | :------------------------------------------------------ |
-| **Alunos responsáveis**   | Carlos Vitor Camara Gomes e Giovanna Secundo Penso      |
 | **Instituição**           | Centro Universitário Faculdade São Lucas                |
 | **Disciplina**            | Devops e Computação em Nuvem                            |
 | **Avaliação**             | N1 e N2                                                 |
@@ -377,6 +376,6 @@ echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
 <div align="center">
 
 🏰 **Projeto DevOps** · Cloud Computing · Centro Universitário Faculdade São Lucas  
-Desenvolvido por **Carlos Vitor Camara Gomes**, **Giovanna Secundo Penso** e equipe.
+Desenvolvido por **Carlos Vitor Camara Gomes**, e equipe.
 
 </div>
