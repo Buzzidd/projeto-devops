@@ -18,7 +18,7 @@
 ## 📋 Informações Acadêmicas e Técnicas
 
 
-| Item                      | Valor                                                   |
+| Item:                      | Valor                                                   |
 | :------------------------ | :------------------------------------------------------ |
 | **Instituição**           | Centro Universitário Faculdade São Lucas                |
 | **Disciplina**            | Cloud Computing                                         |
