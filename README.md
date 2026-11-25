@@ -326,7 +326,7 @@ Caso seja necessário subir a aplicação diretamente dentro do servidor sem uti
 
 ```bash
 # 1. Clonar o repositório na instância EC2
-git clone [https://github.com/Buzzidd/projeto-devops.git](https://github.com/Buzzidd/projeto-devops.git)
+git clone https://github.com/Buzzidd/projeto-devops.git
 cd projeto-devops
 
 # 2. Criar a rede externa de observabilidade
